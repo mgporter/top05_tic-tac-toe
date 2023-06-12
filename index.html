@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test</title>
+    <title>Ultimate Tic-Tac-Toe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="./meyer_reset.css"></link>
     <link rel="stylesheet" type="text/css" href="./style.css"></link>
     <script type="text/javascript" src="./script.js" defer></script>
@@ -12,6 +15,103 @@
 <body>
 
 
+<div id="options-container">
+    <div id="options-header">Ultimate<br>Tic-Tac-Toe</div>
+    <div id="options-pane1" class="options-pane options-hidden">
+        <div class="options-pane-select-text">Select</div>
+        <label for="number-of-players">Number of Players</label>
+        <input type="text" pattern="/[0-9]/" name="number-of-players" id="number-of-players" placeholder="2">
+        <div class="go-button-parent"><button class="go-button" type="button"><span>GO!</span></button></div>
+    </div>
+    <div id="options-pane2" class="options-pane options-hidden">
+        <div class="options-pane-select-text">Select</div>
+        <fieldset id="grid-size-fieldset">
+            <legend>Grid Size</legend>
+
+            <label for="3x3" class="grid-size-option">
+                <input type="radio" id="3x3" name="grid-size" value="3" checked>
+                <div class="grid-size-image-container">
+                    <img src="./3x3_grid.svg" alt="3x3 Grid">
+                    <span>3 x 3<br>(traditional)</span>
+                </div>
+            </label>
+
+            <label for="4x4" class="grid-size-option">
+                <input type="radio" id="4x4" name="grid-size" value="4">
+                <div class="grid-size-image-container">
+                    <img src="./4x4_grid.svg" alt="4x4 Grid">
+                    <span>4 x 4</span>
+                </div>
+            </label>
+
+            <label for="5x5" class="grid-size-option">
+                <input type="radio" id="5x5" name="grid-size" value="5">
+                <div class="grid-size-image-container">
+                    <img src="./5x5_grid.svg" alt="5x5 Grid">
+                    <span>5 x 5</span>
+                </div>
+            </label>
+
+            <label for="other" class="grid-size-option">
+                <input type="radio" id="other" name="grid-size" value="other">
+                <div class="grid-size-image-container">
+                    <div id="custom-grid-size-input">
+                        <input type="text" pattern="/[0-9]/" name="custom-grid-size-x" id="custom-grid-size-x" maxlength="1">
+                        <span> × </span>
+                        <input type="text" pattern="/[0-9]/" name="custom-grid-size-y" id="custom-grid-size-y" maxlength="1">
+                    </div>
+                    <span>Custom Size</span>
+                </div>
+            </label>
+
+        </fieldset>
+        <div class="go-button-parent"><button class="go-button" type="button"><span>GO!</span></button></div>
+    </div>
+    <div id="options-pane3" class="options-pane options-hidden">
+        <div class="options-pane-select-text">Select</div>
+        <label for="items-in-a-row">Items in a Row Needed to Win</label>
+        <input type="text" pattern="/[0-9]/" name="items-in-a-row" id="items-in-a-row" placeholder="3">
+        <div class="go-button-parent"><button class="go-button" type="button"><span>GO!</span></button></div>
+    </div>
+</div>
+
+
+<div id="game-container">
+    <div id="left-panel">
+        <div id="player-selections">
+            <!-- Player information goes here -->
+            <!-- <div class="player-name-box">Player 1</div>
+            <div class="player-mark-box">
+                <div class="mark-selection" data-player="1">X</div>
+                <div class="mark-selection" data-player="1">X</div>
+                <div class="mark-selection" data-player="1">X</div>
+                <div class="mark-selection" data-player="1">X</div>
+                <div class="mark-selection" data-player="1">X</div>
+                <div class="mark-selection" data-player="1">X</div>
+                <div class="mark-selection" data-player="1">X</div>
+                <div class="mark-selection" data-player="1">X</div>
+            </div> -->
+        </div>
+        <button type="button" id="reset-game"><span>Reset game</span></button>
+        <button type="button" id="back-to-options"><span>Game options</span></button>
+    </div>
+    <div id="right-panel">
+        <div id="game-title">Ultimate Tic-Tac-Toe</div>
+        <div id="grid-container">
+            <!-- <div class="grid-space">
+                <div data-row="0" data-column="0" class="cell"></div>
+            </div>
+            <div class="grid-space"><div class="cell"></div></div>
+            <div class="grid-space"><div class="cell"></div></div>
+            <div class="grid-space"><div class="cell"></div></div>
+            <div class="grid-space"><div class="cell"></div></div>
+            <div class="grid-space"><div class="cell"></div></div>
+            <div class="grid-space"><div class="cell"></div></div>
+            <div class="grid-space"><div class="cell"></div></div>
+            <div class="grid-space"><div class="cell"></div></div> -->
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
