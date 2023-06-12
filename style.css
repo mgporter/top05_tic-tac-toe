@@ -246,14 +246,22 @@ legend {
     font-family: "Bruno Ace", sans-serif;
     padding: 4px 24px;
     border-radius: 24px;
+    align-items: center;
 
     &.current-player {
         background-color: white;
         color: rgb(84, 0, 0);
         font-weight: bold;
     }
+
 }
 
+.player-color {
+    height: 1.4rem;
+    width: 1.4rem;
+    border-radius: 24px;
+    margin-right:16px;
+}
 
 .player-mark-box {
     flex-wrap: wrap;
@@ -275,7 +283,7 @@ legend {
     cursor: pointer;
 }
 
-.mark-selection:hover {
+#game-container.hover-on .mark-selection:hover {
     background-color: rgb(187, 187, 187);
 }
 
@@ -358,8 +366,6 @@ legend {
 }
 
 .grid-space .cell {
-    /* background-color:rgb(170, 170, 170); */
-    /* transform: skew(20deg); */
     border: 2px solid gray;
     border-radius: 24px;
     width: 180px;
@@ -370,7 +376,7 @@ legend {
     cursor: pointer;
 }
 
-.grid-space .cell:hover {
+#game-container.hover-on .grid-space .cell:hover {
     background-color: rgb(221, 221, 221);
     border: 2px inset gray;
 }

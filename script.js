@@ -84,6 +84,8 @@ function getOptions() {
     function startGame() {
         optionsContainer.classList.add('roll-up')
         optionsContainer.addEventListener('animationend', removeOptionsContainer)
+        gameContainer.classList.add('hover-on')
+
         game = gameController(numberOfPlayers, gridSize, itemsNeededToWin)
     }
 
@@ -94,6 +96,7 @@ function getOptions() {
 
     function quickStart() {
         optionsContainer.style.display = 'none'
+        gameContainer.classList.add('hover-on')
         game = gameController(numberOfPlayers, gridSize, itemsNeededToWin)
     }
 
@@ -321,13 +324,15 @@ function DOMController() {
 
     function setActivePlayer(num) {
         const activePlayerBoxes = document.querySelectorAll('.player-name-box')
-        activePlayerBoxes.forEach((box) => {
+        
+        activePlayerBoxes.forEach((box) => {            // loop through and remove the class current-player
             if (box.className.includes('current-player')) {
                 box.classList.remove('current-player')
             }
         })
 
         const activePlayerBox = document.querySelector(`.player-name-box[data-player="${num}"]`)
+
         
         activePlayerBox.classList.add('current-player')
     }
@@ -348,7 +353,8 @@ function DOMController() {
                 const nameBox = document.createElement('div')
                 nameBox.classList.add('player-name-box')
                 nameBox.setAttribute('data-player', i)
-                nameBox.textContent = `Player ${i}`
+                nameBox.innerHTML = 
+                    `<span style="background-color:${colors[i-1]};" class="player-color"></span>Player ${i}`;
                 playerSelectionsDiv.appendChild(nameBox)
 
                 const markBox = document.createElement('div')
@@ -411,13 +417,18 @@ function DOMController() {
         game.playRound(e.target.dataset.row, e.target.dataset.column)
     }
 
+    function removeHandleCellClick() {
+        const cells = document.querySelectorAll('.cell')
+        cells.forEach((cell) => cell.removeEventListener('click', handleCellClick))
+    }
+
     function addMarkToBoard(row, column, activePlayer) {
         const cell = document.querySelector(`[data-row="${row}"][data-column="${column}"]`)
-        cell.style.backgroundColor = colors[activePlayer]
+        cell.style.backgroundColor = colors[activePlayer - 1]
         cell.textContent = marks[activePlayer]
     }
 
-    return {setupPlayers, createGameGrid, setActivePlayer, addMarkToBoard}
+    return {setupPlayers, createGameGrid, setActivePlayer, addMarkToBoard, removeHandleCellClick}
 }
 
 
@@ -449,6 +460,8 @@ function gameController(numberOfPlayers, gridSize, itemsNeededToWin) {
         if (activePlayer > players.length) {
             activePlayer = 1;
         }
+
+        DOMControl.setActivePlayer(activePlayer)
         
         const winningCells = gameBoard.checkForWin()
         if (winningCells) displayWinner(winningCells)
@@ -462,8 +475,11 @@ function gameController(numberOfPlayers, gridSize, itemsNeededToWin) {
     
 
     function displayWinner(winner) {
-        const cells = document.querySelectorAll('.cell')
-        cells.forEach((cell) => cell.removeEventListener('click', DOMControl.handleCellClick))
+        
+        DOMControl.removeHandleCellClick()
+        const gameContainer = document.getElementById('game-container')
+        gameContainer.classList.remove('hover-on')
+        console.log("removed")
         // do stuff here
     }
 
