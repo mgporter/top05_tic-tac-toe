@@ -406,12 +406,16 @@ legend {
     cursor: pointer;
 }
 
+.grid-space .cell.win {
+    transform: scale(1.15);
+}
+
 #game-container.hover-on .grid-space .cell:hover {
     background-color: rgb(221, 221, 221);
     border: 2px inset gray;
 }
 
-#message-container {
+#message-container, #message-container > span {
     font-size:3rem;
     color:black;
     margin-bottom: 24px;

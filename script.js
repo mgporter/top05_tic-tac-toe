@@ -113,6 +113,13 @@ function boardController(gridSize, numberOfItemsToWin) {
 
     board = [];
 
+    const neighbors = {            // we will use this values when checking win conditions
+        dl: [1,-1],
+        d: [1,0],
+        dr: [1,1],
+        r: [0,1],
+    }
+
     function initialize() {
 
         for (let i = 0; i < rows; i++) {
@@ -130,230 +137,73 @@ function boardController(gridSize, numberOfItemsToWin) {
     }
 
 
-    // function checkForWin() {
-        
-    //     let startTime = performance.now()
+    function checkForWin() {
 
-    //     const neighbors = {
-    //         d: [1,0],
-    //         dr: [1,1],
-    //         r: [0,1],
-    //         ur: [-1,1],
-    //         u: [-1,0],
-    //         ul: [-1,-1],
-    //         l: [0,-1],
-    //         dl: [1,-1],
-    //     }
+        for (let i = 0; i < rows; i++) {   // loop over the rows
+            columnLoop:
+            for (let j = 0; j < columns; j++) {    // loop over the columns
 
-    //     for (let i = 0; i < rows; i++) {
-    //         columnLoop:
-    //         for (let j = 0; j < columns; j++) {
+                // if there is a no value here yet, just go on to the next cell
+                const startingValue = board[i][j]
+                if (startingValue === 0) continue columnLoop
 
-    //             const startingValue = board[i][j]
+                // loop over each direction defined in neighbors. A direction is an offset value like [1,0] that
+                // tells the program to look at the cell one row down and 0 columns over. We only need to define
+                // 4 directions instead of 8, because we don't need to look backwards over the cells we already
+                // looped over.
+                directionLoop:
+                for (let dir in neighbors) {
 
-    //             directionLoop:
-    //             for (let dir in neighbors) {
+                    // We look ahead to the next cell. If there isn't a row there yet, we need to 
+                    // terminate the loop early or else the program will through an error when trying
+                    // to access the column of a row that is undefined
+                    let nextCellX = board[i + neighbors[dir][0]]
+                    if (nextCellX === undefined) continue directionLoop
 
-    //                 let nextCellX = board[i + neighbors[dir][0]]
-    //                 if (nextCellX === undefined) continue directionLoop
-
-    //                 let nextCell = nextCellX[j + neighbors[dir][1]]
+                    let nextCell = nextCellX[j + neighbors[dir][1]]
                     
+                    // if the next cell doesn't exist, or is value 0, or doesn't match the starting cell's value,
+                    // we can just quit going in this direction
+                    if (nextCell === undefined || nextCell === 0 || board[i + neighbors[dir][0]][j + neighbors[dir][1]] !== startingValue) {
+                        continue directionLoop;
+                    }
 
-    //                 if (nextCell === undefined || nextCell === 0 || board[i + neighbors[dir][0]][j + neighbors[dir][1]] !== startingValue) {
-    //                     continue directionLoop;
-    //                 }
-
-    //                 for (let con = 2; con < numberOfItemsToWin; con++) {
-    //                     let nextnextCellX = board[i + (con * neighbors[dir][0])]
-    //                     if (nextnextCellX === undefined) continue directionLoop
+                    // ...but if there is a match, then we can keep trying to find matches that extend
+                    // in the same direction. The con variable is for consecutive, and is multiplied by 
+                    // the offsets. So a direction like [1, -1] would become [2, -2] with a con value of 2
+                    for (let con = 2; con < numberOfItemsToWin; con++) {
                         
-    //                     let nextnextCell = nextnextCellX[j + (con * neighbors[dir][1])]
-    //                     if (nextnextCell === undefined || nextnextCell === 0 || nextnextCell !== startingValue) {
-    //                         continue directionLoop;
-    //                     }
-    //                 }
+                        // make sure the next row exists first
+                        let nextnextCellX = board[i + (con * neighbors[dir][0])]
+                        if (nextnextCellX === undefined) continue directionLoop
+                        
+                        let nextnextCell = nextnextCellX[j + (con * neighbors[dir][1])]
+                        if (nextnextCell === undefined || nextnextCell === 0 || nextnextCell !== startingValue) {
+                            continue directionLoop;
+                        }
+                    }
 
-    //                 return `There is a win in direction: ${dir}`
+                    // if we made it this far without a 'continue', then we found a win!
+                    // Now we'll construct the information that will be returned to the gameController
 
-    //             }
+                    let winArray = [startingValue, [i, j]]      // the winning player's value and first winning cell
+                    
+                    // then we push in the [rownum, colnum] of all of the other winning cells
+                    for (let con = 1; con < numberOfItemsToWin; con++) {
+                        winArray.push([i + (con * neighbors[dir][0]), j + (con * neighbors[dir][1])])
+                    }
 
-    //             continue columnLoop;
-    //         }
-    //     }
+                    console.log(`There is a win in direction: ${dir}`)
+                    return winArray
 
-    //     let endTime = performance.now()
+                }
 
-    //     return `There is no win. Performance is ${endTime - startTime}`
-    // }
-
-
-    // this function takes the gameBoard as an argument and returns the winner's number, or 0 if none
-    // we will first convert the gameboard into a string so we can quickly check it with Regex
-    // for consecutive numbers. We have to use four different string patterns because a victory can
-    // be horizontal, vertical, diagonal moving forward, and diagonal moving backward
-    function checkForWin() {   
-        let startTime = performance.now()
-        // this function makes a string from each column. We'll use it for everything but the horizontal win condition.
-        function makeStringFromColumns(board) {
-            return board[0].map((_, col) => {
-                return board.reduce((prev, next) => {
-                    return `${prev}${next[col]}`
-                }, "")
-            }).join(",")
+                continue columnLoop;
+            }
         }
-
-        // make a string from the board to represent the horizontal win condition by
-        // making strings from each row
-        const horizontalWinString = board.reduce((prev, next) => {
-            let nextStr = next.join("")
-            return `${prev},${nextStr}`
-        }, "")
-
-        // make a string from the board to represent the vertical win condition
-        const verticalWinString = makeStringFromColumns(board)
-
-        // make a string from the board to represent the diagonal forward win condition
-        // In order to check for diagonals, we first shift the rows based on their position,
-        // for example:
-        // 1, 2, 3             0, 0, 1, 2, 3
-        // 4, 5, 6   becomes:  0, 4, 5, 6, 0
-        // 7, 8, 9             7, 8, 9, 0, 0
-        let shiftedForwardBoard = board.map((row, i) => {
-            let startingArr = Array.from(Array(board.length - i - 1), () => "X")
-            let endingArr = Array.from(Array(i), () => "X")
-            return [...startingArr, ...row, ...endingArr]
-        })
-
-        // After the shift, we can just check the board vertically
-        const diagforwardWinString = makeStringFromColumns(shiftedForwardBoard)
-
-
-        // make a string from the board to represent the diagonal backward win condition
-        // Same idea as above, but shifted so that the bottom rows move the most:
-        // 1, 2, 3             1, 2, 3, 0, 0
-        // 4, 5, 6   becomes:  0, 4, 5, 6, 0
-        // 7, 8, 9             0, 0, 7, 8, 9 
-        let shiftedBackwardBoard = board.map((row, i) => {
-            let startingArr = Array.from(Array(i), () => "X")
-            let endingArr = Array.from(Array(board.length - i - 1), () => "X")
-            return [...startingArr, ...row, ...endingArr]
-        })
-
-        const diagbackWinString = makeStringFromColumns(shiftedBackwardBoard)
-
-
-
-        // the checkStr function checks each string for a victory condition
-        function checkStr(h, v, df, db) {
-
-            // create the Regex string to use to match the array strings
-            // it will find the first case of numberOfItemsToWin consecutive items
-            let victoryRegex = "([1-9])"
-            for (let i = 0; i < (numberOfItemsToWin - 1); i++) {
-                victoryRegex += "\\1"
-            }
-            let re = new RegExp(victoryRegex)
-
-            // search the strings for regex match (which is the victory condition)
-            let winnerIndexH = h.search(re)
-            let winnerIndexV = v.search(re)
-            let winnerIndexDF = df.search(re)
-            let winnerIndexDB = db.search(re)
-
-            // check if there is a win in any of them. If not (the most frequent case), we just return 0
-            if (winnerIndexH === -1 && winnerIndexV === -1 && winnerIndexDF === -1 && winnerIndexDB === -1) {
-                return 0
-            }
-            
-            // However if there is a match of the victory Regex, then we need to get the winning cells
-            // We'll define the functions first, then call them at the end
-
-            function getCellsFromHorizontalWin(idx) {
-                const winningPlayer = h[idx];          // get the winning players number
-                const adjustedIdx = idx - (Math.floor(idx/columns) + 1);       // calculate the index as if the string had no commas
-                const winnerStartCell = [Math.floor(adjustedIdx/columns), adjustedIdx % columns];   // get the first winning cell
-                
-                let winnerCells = [];
-                winnerCells.push(winningPlayer)        // push the winning players number in first
-                winnerCells.push(winnerStartCell)      // then push the first winning cell
-
-                for (let i = 1; i < numberOfItemsToWin; i++) {
-                    const newCell = [winnerStartCell[0], winnerStartCell[1] + i]
-                    winnerCells.push(newCell)           // then calculate and push the rest of the winning cells
-                }
-
-                return winnerCells
-            }
-
-            function getCellsFromVerticalWin(idx) {
-                const winningPlayer = v[idx];
-                const adjustedIdx = idx - (Math.floor(idx/rows));
-                // const winnerStartCell = [Math.floor(adjustedIdx/rows), adjustedIdx % rows];
-                const winnerStartCell = [adjustedIdx % rows, Math.floor(adjustedIdx/rows)];
-
-                
-                let winnerCells = [];
-                winnerCells.push(winningPlayer)
-                winnerCells.push(winnerStartCell)
-
-                for (let i = 1; i < numberOfItemsToWin; i++) {
-                    const newCell = [winnerStartCell[0] + i, winnerStartCell[1]]
-                    winnerCells.push(newCell)
-                }
-
-                return winnerCells
-            }
-
-            function getCellsFromDiagforwardWin(idx) {
-                const winningPlayer = df[idx];
-                const adjustedIdx = idx - (Math.floor(idx/rows) - 1);
-                const winnerStartCell = [adjustedIdx % rows, (Math.floor(adjustedIdx/rows) - ((rows - 1) - adjustedIdx % rows))];
-                
-                let winnerCells = [];
-                winnerCells.push(winningPlayer)
-                winnerCells.push(winnerStartCell)
-
-                for (let i = 1; i < numberOfItemsToWin; i++) {
-                    const newCell = [winnerStartCell[0] + i, winnerStartCell[1] + i]
-                    winnerCells.push(newCell)
-                }
-
-                return winnerCells
-            }
-
-            function getCellsFromDiagbackwardWin(idx) {
-                const winningPlayer = db[idx];
-                const adjustedIdx = idx - (Math.floor(idx/rows));
-                const winnerStartCell = [adjustedIdx % rows, Math.floor(adjustedIdx/rows) - (adjustedIdx % rows)];
-                
-                let winnerCells = [];
-                winnerCells.push(winningPlayer)
-                winnerCells.push(winnerStartCell)
-
-                for (let i = 1; i < numberOfItemsToWin; i++) {
-                    const newCell = [winnerStartCell[0] + i, winnerStartCell[1] - i]
-                    winnerCells.push(newCell)
-                }
-
-                return winnerCells
-            }
-
-            // call the relevant function. Note that the string can only have one type of victory at a time
-            if (winnerIndexH !== -1) return getCellsFromHorizontalWin(winnerIndexH);
-            if (winnerIndexV !== -1) return getCellsFromVerticalWin(winnerIndexV);
-            if (winnerIndexDF !== -1) return getCellsFromDiagforwardWin(winnerIndexDF);
-            if (winnerIndexDB !== -1) return getCellsFromDiagbackwardWin(winnerIndexDB);
-        }
-
-        // check the strings for a winner, and report back the winner and the coordinates if found, or 0 if not found
-        let winningCells = checkStr(horizontalWinString, verticalWinString, diagforwardWinString, diagbackWinString)
-
-        let endTime = performance.now()
-        console.log(`performance time is ${endTime - startTime}`)
-
-        return winningCells
-
+        console.log("no win")
+        // if we get here, we finished the loops and didn't find a win, so return null
+        return null      
     }
 
     return {initialize, addMark, checkForWin}
@@ -490,7 +340,25 @@ function DOMController() {
         cell.textContent = marks[activePlayer]
     }
 
-    return {setupPlayers, createGameGrid, setActivePlayer, addMarkToBoard, removeHandleCellClick}
+    function setWinScreen(winArray) {
+        const gameContainer = document.getElementById('game-container')
+        gameContainer.classList.remove('hover-on')
+
+        const winningPlayer = winArray.splice(0, 1)[0]
+        const messageContainer = document.getElementById('message-container')
+        messageContainer.innerHTML = `<span style="color: ${colors[winningPlayer - 1]}"> Player ${winningPlayer}</span> wins!`;
+
+        let winningCells = []
+        for (let i = 0; i < winArray.length; i++) {
+            winningCells.push(document.querySelector(`div.cell[data-row="${winArray[i][0]}"][data-column="${winArray[i][1]}"]`))
+        }
+
+        winningCells.forEach((cell) => {
+            cell.classList.add('win')
+        })
+    }
+
+    return {setupPlayers, createGameGrid, setActivePlayer, addMarkToBoard, removeHandleCellClick, setWinScreen}
 }
 
 
@@ -528,19 +396,15 @@ function gameController(numberOfPlayers, gridSize, itemsNeededToWin) {
         const winningCells = gameBoard.checkForWin()
         if (winningCells) displayWinner(winningCells)
 
-        // if (winnerNum) displayWinner(winnerNum)
-
     }
 
     
 
-    function displayWinner(winner) {
+    function displayWinner(winArray) {
         
         DOMControl.removeHandleCellClick()
-        const gameContainer = document.getElementById('game-container')
-        gameContainer.classList.remove('hover-on')
-        console.log("removed")
-        // do stuff here
+        DOMControl.setWinScreen(winArray)
+
     }
 
     return {playRound, activePlayer}
