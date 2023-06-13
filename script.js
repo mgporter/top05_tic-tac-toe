@@ -129,12 +129,71 @@ function boardController(gridSize, numberOfItemsToWin) {
         return 0;
     }
 
+
+    // function checkForWin() {
+        
+    //     let startTime = performance.now()
+
+    //     const neighbors = {
+    //         d: [1,0],
+    //         dr: [1,1],
+    //         r: [0,1],
+    //         ur: [-1,1],
+    //         u: [-1,0],
+    //         ul: [-1,-1],
+    //         l: [0,-1],
+    //         dl: [1,-1],
+    //     }
+
+    //     for (let i = 0; i < rows; i++) {
+    //         columnLoop:
+    //         for (let j = 0; j < columns; j++) {
+
+    //             const startingValue = board[i][j]
+
+    //             directionLoop:
+    //             for (let dir in neighbors) {
+
+    //                 let nextCellX = board[i + neighbors[dir][0]]
+    //                 if (nextCellX === undefined) continue directionLoop
+
+    //                 let nextCell = nextCellX[j + neighbors[dir][1]]
+                    
+
+    //                 if (nextCell === undefined || nextCell === 0 || board[i + neighbors[dir][0]][j + neighbors[dir][1]] !== startingValue) {
+    //                     continue directionLoop;
+    //                 }
+
+    //                 for (let con = 2; con < numberOfItemsToWin; con++) {
+    //                     let nextnextCellX = board[i + (con * neighbors[dir][0])]
+    //                     if (nextnextCellX === undefined) continue directionLoop
+                        
+    //                     let nextnextCell = nextnextCellX[j + (con * neighbors[dir][1])]
+    //                     if (nextnextCell === undefined || nextnextCell === 0 || nextnextCell !== startingValue) {
+    //                         continue directionLoop;
+    //                     }
+    //                 }
+
+    //                 return `There is a win in direction: ${dir}`
+
+    //             }
+
+    //             continue columnLoop;
+    //         }
+    //     }
+
+    //     let endTime = performance.now()
+
+    //     return `There is no win. Performance is ${endTime - startTime}`
+    // }
+
+
     // this function takes the gameBoard as an argument and returns the winner's number, or 0 if none
     // we will first convert the gameboard into a string so we can quickly check it with Regex
     // for consecutive numbers. We have to use four different string patterns because a victory can
     // be horizontal, vertical, diagonal moving forward, and diagonal moving backward
     function checkForWin() {   
-
+        let startTime = performance.now()
         // this function makes a string from each column. We'll use it for everything but the horizontal win condition.
         function makeStringFromColumns(board) {
             return board[0].map((_, col) => {
@@ -289,6 +348,9 @@ function boardController(gridSize, numberOfItemsToWin) {
 
         // check the strings for a winner, and report back the winner and the coordinates if found, or 0 if not found
         let winningCells = checkStr(horizontalWinString, verticalWinString, diagforwardWinString, diagbackWinString)
+
+        let endTime = performance.now()
+        console.log(`performance time is ${endTime - startTime}`)
 
         return winningCells
 
@@ -466,8 +528,6 @@ function gameController(numberOfPlayers, gridSize, itemsNeededToWin) {
         const winningCells = gameBoard.checkForWin()
         if (winningCells) displayWinner(winningCells)
 
-        console.log(winningCells)
-
         // if (winnerNum) displayWinner(winnerNum)
 
     }
@@ -488,9 +548,9 @@ function gameController(numberOfPlayers, gridSize, itemsNeededToWin) {
 
 let game;
 
-// getOptions().startOptions()
+getOptions().startOptions()
 
-getOptions().quickStart()
+// getOptions().quickStart()
 
 
 
