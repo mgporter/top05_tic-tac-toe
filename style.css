@@ -140,6 +140,7 @@ legend {
     align-items: center;
     height: 7rem;
     border:4px outset transparent;
+    transition: 0.1s;
 }
 
 .grid-size-option:hover {
@@ -175,7 +176,7 @@ legend {
 
 .go-button-parent { 
     filter: drop-shadow(6px 6px 2px rgb(175, 175, 175));
-
+    transition: 0.2s;
 }
 
 .go-button-parent:hover { 
@@ -312,6 +313,11 @@ legend {
     cursor: pointer;
 }
 
+#reset-game-wrapper, #back-to-options-wrapper {
+    filter: none;
+    transition: 0.2s;
+}
+
 #game-container.hover-on #reset-game-wrapper:hover {
     filter: drop-shadow(4px 4px 4px white);
 }
@@ -417,6 +423,7 @@ legend {
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    transition: 0,2s;
 }
 
 .grid-space .cell.win {
