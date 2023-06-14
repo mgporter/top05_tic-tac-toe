@@ -283,6 +283,10 @@ legend {
     cursor: pointer;
 }
 
+.mark-selection.selected {
+    background: black;
+}
+
 #game-container.hover-on .mark-selection:hover {
     background-color: rgb(187, 187, 187);
 }
@@ -305,6 +309,15 @@ legend {
     border: none;
     margin: 12px 0 12px 36px;
     padding: 0 32px;
+    cursor: pointer;
+}
+
+#game-container.hover-on #reset-game-wrapper:hover {
+    filter: drop-shadow(4px 4px 4px white);
+}
+
+#back-to-options-wrapper:hover {
+    filter: drop-shadow(4px 4px 4px white);
 }
 
 #left-panel button > span {
@@ -396,8 +409,8 @@ legend {
 .grid-space .cell {
     border: 2px solid gray;
     border-radius: 24px;
-    width: min(180px, 10vw);
-    height: min(120px, 8vw);
+    width: min(180px, 8vw);
+    height: min(120px, 6vw);
     /* width: 75%;
     height: 75%; */
     font-size: min(5rem, 6vw);
@@ -407,7 +420,14 @@ legend {
 }
 
 .grid-space .cell.win {
-    transform: scale(1.15);
+    animation-name: scale-up-win;
+    animation-duration: 200ms;
+    animation-fill-mode: forwards;
+}
+
+@keyframes scale-up-win {
+    from {transform: scale(1);}
+    to {transform: scale(1.15);}
 }
 
 #game-container.hover-on .grid-space .cell:hover {

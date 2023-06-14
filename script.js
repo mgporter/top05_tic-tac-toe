@@ -82,6 +82,9 @@ function getOptions() {
     }
 
     function startGame() {
+        selectItemsPanel.classList.remove('options-visible')
+        selectItemsPanel.classList.add('options-hidden')
+        
         optionsContainer.classList.add('roll-up')
         optionsContainer.addEventListener('animationend', removeOptionsContainer)
         gameContainer.classList.add('hover-on')
@@ -95,12 +98,22 @@ function getOptions() {
     }
 
     function quickStart() {
+        selectItemsPanel.classList.remove('options-visible')
+        selectItemsPanel.classList.add('options-hidden')
+        
         optionsContainer.style.display = 'none'
         gameContainer.classList.add('hover-on')
         game = gameController(numberOfPlayers, gridSize, itemsNeededToWin)
     }
 
-    return {startOptions, quickStart}
+    function restartGame() {
+        optionsContainer.classList.remove('roll-up')
+        optionsContainer.style.display = 'flex'
+
+        startOptions()
+    }
+
+    return {startOptions, quickStart, restartGame}
 
 }
 
@@ -111,7 +124,7 @@ function boardController(gridSize, numberOfItemsToWin) {
     let rows = gridSize[0];
     let columns = gridSize[1];
 
-    board = [];
+    let board = [];
 
     const neighbors = {            // we will use this values when checking win conditions
         dl: [1,-1],
@@ -121,6 +134,8 @@ function boardController(gridSize, numberOfItemsToWin) {
     }
 
     function initialize() {
+        console.log('initialize')
+        board = [];
 
         for (let i = 0; i < rows; i++) {
             board.push([])
@@ -128,6 +143,14 @@ function boardController(gridSize, numberOfItemsToWin) {
                 board[i].push(0)
             }
         }
+    }
+
+    function getBoard() {
+        return board;
+    }
+
+    function resetBoard() {
+        initialize()
     }
 
     function addMark(row, column, playerNum) {
@@ -139,13 +162,18 @@ function boardController(gridSize, numberOfItemsToWin) {
 
     function checkForWin() {
 
+        let emptySpaces = 0;
+
         for (let i = 0; i < rows; i++) {   // loop over the rows
             columnLoop:
             for (let j = 0; j < columns; j++) {    // loop over the columns
 
                 // if there is a no value here yet, just go on to the next cell
                 const startingValue = board[i][j]
-                if (startingValue === 0) continue columnLoop
+                if (startingValue === 0) {
+                    emptySpaces++               // we count the number of empty spaces to use later
+                    continue columnLoop
+                }
 
                 // loop over each direction defined in neighbors. A direction is an offset value like [1,0] that
                 // tells the program to look at the cell one row down and 0 columns over. We only need to define
@@ -201,19 +229,25 @@ function boardController(gridSize, numberOfItemsToWin) {
                 continue columnLoop;
             }
         }
-        console.log("no win")
-        // if we get here, we finished the loops and didn't find a win, so return null
-        return null      
+        
+        // If we get here, we finished the loops and didn't find a win.
+        // If there aren't any empty spaces, then it's a draw
+        if (emptySpaces === 0) {
+            return "draw";
+        } else {
+            return null;
+        }
+            
     }
 
-    return {initialize, addMark, checkForWin}
+    return {initialize, addMark, checkForWin, getBoard, resetBoard}
 }
 
 
 // Player factory function
 function Player(num) {
     
-    let mark = "X"
+    let mark = ""
 
     function getNum() {
         return num;
@@ -223,7 +257,11 @@ function Player(num) {
         return mark;
     }
 
-    return {getNum, getMark};
+    function setMarkByIndex(idx) {
+        mark = idx;
+    }
+
+    return {getNum, getMark, setMarkByIndex};
 }
 
 
@@ -231,8 +269,12 @@ function Player(num) {
 
 function DOMController() {
     
-    const marks = ["X", "O", "!", ":)", ":O", "!", "M", "8"]
+    const marks = ["X", "O", "✓", "😊", "$", "!", "π", "∞"]
     const colors = ["#FF7B7B", "#BDFF7B", "#7BFFFF", "#BD7BFF", "#FFD06C", "#6CFF87", "#6C9BFF", "#FF6CE4"]
+
+    function getMarks() {
+        return marks;
+    }
 
     function setActivePlayer(num) {
         const activePlayerBoxes = document.querySelectorAll('.player-name-box')
@@ -244,48 +286,75 @@ function DOMController() {
         })
 
         const activePlayerBox = document.querySelector(`.player-name-box[data-player="${num}"]`)
-
-        
         activePlayerBox.classList.add('current-player')
+
+        const messageContainer = document.getElementById('message-container')
+        messageContainer.innerHTML = `<p>It's <span style="color: ${colors[num - 1]};">Player ${num}'s</span> turn.</p>`
+    }
+
+    function markBoxListener(e) {
+        const playerNum = e.target.dataset.player
+        const newMark = e.target.dataset.mark
+        const oldMark = game.getPlayer(playerNum).getMark()
+
+        // Change the selected mark in the mark-box
+        const markBoxOld = document.querySelector(`.mark-selection.selected[data-player="${playerNum}"]`)
+        markBoxOld.classList.remove('selected')
+
+        const markBoxNew = document.querySelector(`.mark-selection[data-player="${playerNum}"][data-mark="${newMark}"]`);
+        markBoxNew.classList.add('selected')
+
+        // Query all of the cells that have the player's old marks
+        let playerCells = Array.from(document.querySelectorAll(`.cell[data-ownedby="${playerNum}"]`))
+
+        // And change them to the new mark
+        playerCells.forEach((cell) => cell.textContent = marks[newMark])
+
+        // Update the Player object with the new mark
+        game.getPlayer(playerNum).setMarkByIndex(newMark)
+
     }
 
     function setupPlayers(num) {
-        const players = []
+        const players = [];
         
 
         for (let i = 1; i <= num; i++) {
-            players.push(Player(i))
+            const newPlayer = Player(i);
+            newPlayer.setMarkByIndex(i - 1);
+            players.push(newPlayer);
         }
 
-        function updateDOM() {
-            const playerSelectionsDiv = document.getElementById('player-selections')
-            playerSelectionsDiv.textContent = "";
+        // Create the left-side menu with player names, colors, and mark selection box in the DOM
+        const playerSelectionsDiv = document.getElementById('player-selections');
+        playerSelectionsDiv.textContent = "";
 
-            for (let i = 1; i <= num; i++) {
-                const nameBox = document.createElement('div')
-                nameBox.classList.add('player-name-box')
-                nameBox.setAttribute('data-player', i)
-                nameBox.innerHTML = 
-                    `<span style="background-color:${colors[i-1]};" class="player-color"></span>Player ${i}`;
-                playerSelectionsDiv.appendChild(nameBox)
+        for (let i = 1; i <= num; i++) {
+            const nameBox = document.createElement('div');
+            nameBox.classList.add('player-name-box');
+            nameBox.setAttribute('data-player', i);
+            nameBox.innerHTML = 
+                `<span style="background-color:${colors[i-1]};" class="player-color"></span>Player ${i}`;
+            playerSelectionsDiv.appendChild(nameBox);
 
-                const markBox = document.createElement('div')
-                markBox.classList.add('player-mark-box')
-                playerSelectionsDiv.appendChild(markBox)
+            const markBox = document.createElement('div')
+            markBox.classList.add('player-mark-box')
+            playerSelectionsDiv.appendChild(markBox)
 
-                for (let j = 0; j < marks.length; j++) {
-                    const markSelection = document.createElement('div')
-                    markSelection.classList.add('mark-selection')
-                    markSelection.setAttribute('data-player', (i))
-                    markSelection.setAttribute('data-mark', j)
-                    markSelection.textContent = marks[j]
-
-                    markBox.appendChild(markSelection)
+            for (let j = 0; j < marks.length; j++) {
+                const markSelection = document.createElement('div')
+                markSelection.classList.add('mark-selection')
+                markSelection.setAttribute('data-player', (i))
+                markSelection.setAttribute('data-mark', j)
+                markSelection.textContent = marks[j]
+                if (j === i-1) {
+                    markSelection.classList.add('selected')
                 }
+                markBox.addEventListener('click', markBoxListener)
+
+                markBox.appendChild(markSelection)
             }
         }
-
-        updateDOM()
 
         setActivePlayer(1)
 
@@ -297,6 +366,7 @@ function DOMController() {
         let rows = gridSize[0];
         let columns = gridSize[1];
         const gridContainer = document.getElementById('grid-container')
+        gridContainer.innerHTML = ''   // Delete anything there
 
         gridContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`
 
@@ -315,6 +385,7 @@ function DOMController() {
                 cell.classList.add('cell')
                 cell.setAttribute('data-row', i)
                 cell.setAttribute('data-column', j)
+                cell.setAttribute('data-ownedby', 0)
                 cell.addEventListener('click', handleCellClick)
 
                 gridSpace.appendChild(cell)
@@ -329,15 +400,22 @@ function DOMController() {
         game.playRound(e.target.dataset.row, e.target.dataset.column)
     }
 
-    function removeHandleCellClick() {
+    function removeClickHandlers() {
         const cells = document.querySelectorAll('.cell')
         cells.forEach((cell) => cell.removeEventListener('click', handleCellClick))
+
+        const markBoxes = document.querySelectorAll('mark-selection')
+        markBoxes.forEach((box) => box.removeEventListener('click', markBoxListener))
+
+        const resetButton = document.getElementById('reset-game')
+        resetButton.disabled = true
     }
 
     function addMarkToBoard(row, column, activePlayer) {
         const cell = document.querySelector(`[data-row="${row}"][data-column="${column}"]`)
         cell.style.backgroundColor = colors[activePlayer - 1]
-        cell.textContent = marks[activePlayer]
+        cell.setAttribute('data-ownedby', activePlayer)
+        cell.textContent = marks[game.getPlayer(activePlayer).getMark()]
     }
 
     function setWinScreen(winArray) {
@@ -346,7 +424,8 @@ function DOMController() {
 
         const winningPlayer = winArray.splice(0, 1)[0]
         const messageContainer = document.getElementById('message-container')
-        messageContainer.innerHTML = `<span style="color: ${colors[winningPlayer - 1]}"> Player ${winningPlayer}</span> wins!`;
+        messageContainer.innerHTML = `
+            <p style="font-weight:bold;"><span style="color: ${colors[winningPlayer - 1]};"> Player ${winningPlayer}</span> wins!</p>`;
 
         let winningCells = []
         for (let i = 0; i < winArray.length; i++) {
@@ -358,7 +437,29 @@ function DOMController() {
         })
     }
 
-    return {setupPlayers, createGameGrid, setActivePlayer, addMarkToBoard, removeHandleCellClick, setWinScreen}
+    function setDrawScreen() {
+        const messageContainer = document.getElementById('message-container')
+        messageContainer.innerHTML = `<p style="font-weight:bold;">It's a draw 🥵</p>`;
+    }
+
+    function resetGrid() {
+        const cells = document.querySelectorAll('.cell')
+        cells.forEach((cell) => {
+            cell.setAttribute('data-ownedby', 0)
+            cell.style.backgroundColor = 'transparent';
+            cell.textContent = '';
+        })
+    }
+
+    return {setupPlayers, 
+        createGameGrid, 
+        setActivePlayer, 
+        addMarkToBoard, 
+        removeClickHandlers, 
+        setWinScreen, 
+        getMarks, 
+        setDrawScreen, 
+        resetGrid};
 }
 
 
@@ -375,11 +476,17 @@ function gameController(numberOfPlayers, gridSize, itemsNeededToWin) {
     const gameBoard = boardController(gridSize, itemsNeededToWin)
     gameBoard.initialize()
     DOMControl.createGameGrid(gridSize)
+    initializeButtons()
 
     function playRound(row, column) {
 
         let result = gameBoard.addMark(row, column, activePlayer);
-        if (result === "taken") return console.log("That space is taken!");
+        
+        if (result === "taken") {
+            const messageContainer = document.getElementById('message-container')
+            messageContainer.textContent = "That spot is taken. Try another one."
+            return
+        }
 
         DOMControl.addMarkToBoard(row, column, activePlayer)
 
@@ -394,20 +501,41 @@ function gameController(numberOfPlayers, gridSize, itemsNeededToWin) {
         DOMControl.setActivePlayer(activePlayer)
         
         const winningCells = gameBoard.checkForWin()
-        if (winningCells) displayWinner(winningCells)
+        if (winningCells === "draw") displayDraw(winningCells)
+        if (Array.isArray(winningCells) === true) displayWinner(winningCells)
 
     }
 
-    
+    function initializeButtons() {
+        const resetButton = document.getElementById('reset-game')
+        const restartGameButton = document.getElementById('back-to-options')
+
+        resetButton.addEventListener('click', () => {
+            gameBoard.resetBoard()
+            DOMControl.resetGrid()
+            DOMControl.setActivePlayer(1)
+        })
+
+        restartGameButton.addEventListener('click', () => {
+            getOptions().restartGame()
+        })
+    }
 
     function displayWinner(winArray) {
-        
-        DOMControl.removeHandleCellClick()
+        DOMControl.removeClickHandlers()
         DOMControl.setWinScreen(winArray)
-
     }
 
-    return {playRound, activePlayer}
+    function displayDraw() {
+        DOMControl.removeClickHandlers()
+        DOMControl.setDrawScreen()
+    }
+
+    function getPlayer(num) {
+        return players[num - 1]
+    }
+
+    return {playRound, getPlayer}
 }
 
 let game;
@@ -415,110 +543,3 @@ let game;
 getOptions().startOptions()
 
 // getOptions().quickStart()
-
-
-
-
-
-
-// This code represents another way to find the win conditions by using loops
-
-/*         // check for a win horizontally
-        for (let i = 0; i < rows; i++) {
-            for (let j = 0; j < columns - 2; j++) {
-
-                if (board[i][j] === 0) continue;
-                
-                if (board[i][j] === board[i][j+1] && board[i][j] === board[i][j+2]) {
-                    console.log('there is a horizontal win!')
-                    return board[i][j]
-                }
-            }
-        }
-
-        // check for a win vertically
-        for (let i = 0; i < rows - 2; i++) {
-            for (let j = 0; j < columns; j++) {
-
-                if (board[i][j] === 0) continue;
-                
-                if (board[i][j] === board[i+1][j] && board[i][j] === board[i+2][j]) {
-                    console.log('there is a vertical win!')
-                    return board[i][j]
-                }
-            }
-        }
-
-        // check for a win diagonally (right then down)
-        for (let i = 0; i < rows - 2; i++) {
-            for (let j = 0; j < columns - 2; j++) {
-
-                if (board[i][j] === 0) continue;
-                
-                if (board[i][j] === board[i+1][j+1] && board[i][j] === board[i+2][j+2]) {
-                    console.log('there is a forward diagonal win!')
-                    return board[i][j]
-                }
-            }
-        }
-
-        // check for a win diagonally (left then down)
-        for (let i = 0; i < rows - 2; i++) {
-            for (let j = 2; j < columns; j++) {
-
-                if (board[i][j] === 0) continue;
-                
-                if (board[i][j] === board[i+1][j-1] && board[i][j] === board[i+2][j-2]) {
-                    console.log('there is a backward diagonal win!')
-                    return board[i][j]
-                }
-            }
-        }
-
-        return 0;
-    } */
-
-
-
-
-    let testBoard1 = [
-        [2, 1, 0, 1, 2],
-        [1, 1, 1, 2, 1],
-        [0, 2, 0, 0, 2],
-        [2, 1, 0, 1, 1],
-    ]
-    
-    let testBoard2 = [
-        [2, 2, 0, 1, 2],
-        [1, 2, 1, 2, 1],
-        [0, 2, 0, 0, 2],
-        [2, 1, 0, 1, 1],
-    ]
-    
-    let testBoard2a = [
-        [2, 2, 1, 1, 2],
-        [1, 3, 1, 2, 1],
-        [0, 2, 1, 0, 2],
-        [2, 1, 0, 1, 1],
-    ]
-    
-    let testBoard3 = [
-        [2, 2, 0, 1, 2],
-        [1, 0, 1, 2, 1],
-        [0, 2, 0, 1, 2],
-        [2, 1, 0, 1, 1],
-    ]
-    
-    let testBoard3a = [
-        [2, 1, 0, 1, 2],
-        [1, 0, 1, 2, 1],
-        [0, 2, 0, 1, 2],
-        [2, 1, 0, 1, 2],
-    ]
-    
-    let testBoard4 = [
-        [2, 1, 0, 1, 2],
-        [1, 0, 1, 2, 1],
-        [0, 1, 0, 2, 2],
-        [2, 1, 0, 1, 1],
-    ]
