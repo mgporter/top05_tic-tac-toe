@@ -10,9 +10,14 @@ body {
   background-color: white;
 }
 
+body,
+html {
+  min-height: 100vh;
+}
+
 /* OPTIONS PANE */
 
-#options-container {
+/* #options-container {
   width: 100%;
   background: rgb(70, 70, 70);
   justify-content: center;
@@ -25,6 +30,40 @@ body {
   bottom: 0;
   left: 0;
   z-index: 100;
+} */
+
+#options-container {
+  width: 100%;
+  min-height: 100vh;
+  background: rgb(70, 70, 70);
+  align-items: stretch;
+  color: white;
+  display: grid;
+  grid-template-areas: 'hd p1 p2 p3';
+  grid-template-columns: 390px 1fr 1fr 1fr;
+}
+
+@media screen and (max-width: 1200px) {
+  #options-container {
+    grid-template-areas:
+      'hd hd hd'
+      'p1 p2 p3';
+    grid-template-rows: 7rem auto;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+#options-header {
+  grid-area: hd;
+}
+#options-pane1 {
+  grid-area: p1;
+}
+#options-pane2 {
+  grid-area: p2;
+}
+#options-pane3 {
+  grid-area: p3;
 }
 
 .roll-up {
@@ -48,16 +87,14 @@ body {
 #options-header {
   background: rgb(0, 0, 0);
   color: white;
-  padding: 24px;
   justify-content: center;
   align-items: center;
   font-size: 3.6rem;
   font-family: 'Bruno Ace', sans-serif;
   font-style: italic;
-  flex: 0 1 25%;
 }
 
-@media screen and (max-width: 1200px) {
+/* @media screen and (max-width: 1200px) {
   #options-header {
     flex: 0 0 100%;
   }
@@ -65,10 +102,9 @@ body {
   .options-pane {
     flex: 1 1 30%;
   }
-}
+} */
 
 .options-pane {
-  flex: 1 1 18%;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
@@ -345,17 +381,6 @@ legend {
   gap: 16px;
 }
 
-/* #game-title {
-    padding: 24px;
-    justify-content: center;
-    align-items: center;
-    font-size: 3.6rem;
-    font-family: "Bruno Ace", sans-serif;
-    font-style: italic;
-    font-weight: bold;
-    margin: 36px 0 48px 0;
-} */
-
 #game-title {
   position: absolute;
   top: 0;
@@ -455,6 +480,18 @@ legend {
   margin-bottom: 24px;
 }
 
-/* div {
-    border: 1px solid red;
-} */
+.flashing {
+  animation-name: flashing-button;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@keyframes flashing-button {
+  0% {
+    background-color: black;
+  }
+  100% {
+    background-color: rgb(156, 47, 196);
+  }
+}
